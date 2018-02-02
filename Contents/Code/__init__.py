@@ -131,8 +131,6 @@ def Programs(title, url):
     t_image, t_title = VRTPlayer.get_thumbnail_and_title(tile)
     Log("episode t_title="+t_title)
     Log("episode t_image="+t_image)
-    t_descr = VRTPlayer.get_description(tile)
-    Log("episode t_descr="+t_descr)
     t_href = tile.xpath("./@href")[0]
     url = config.VRT_BASE_URL + t_href
     Log("episode url="+url)
@@ -142,23 +140,18 @@ def Programs(title, url):
     oc.add(createEpisodeObject(
             url=stream.stream_url,
             title=t_title,
-            show_name = t_title,
-            summary=t_descr,
+            summary=stream.description,
+            show_name=title,
+            duration=stream.duration,
             thumb=t_image,
             rating_key=t_title)) #,
             #originally_available_at=date,
-            #duration=duration,
             #show_name=show_name))
 
   return oc
 
 @route(PREFIX + "/createepisodeobject")
 def createEpisodeObject(url, title, summary, thumb, rating_key, originally_available_at=None, duration=None, show_name=None, include_container=False, **kwargs):
-    container = Container.MP4
-    video_codec = VideoCodec.H264
-    audio_codec = AudioCodec.AAC
-    audio_channels = 2
-
     track_object = EpisodeObject(
         key = Callback(
             createEpisodeObject,
@@ -177,7 +170,7 @@ def createEpisodeObject(url, title, summary, thumb, rating_key, originally_avail
         summary = summary,
         thumb = thumb,
         originally_available_at = originally_available_at,
-        duration = duration,
+        duration = int(duration),
         producers = [],
         show = show_name,
         items = [

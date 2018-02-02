@@ -9,15 +9,15 @@ class TitleItem:
 
 class StreamMetadata:
 
-    def __init__(self, stream_url, subtitle_url):
+    def __init__(self, stream_url, subtitle_url, description=None, genres=None, duration=None):
         self.stream_url = stream_url
         self.subtitle_url = subtitle_url
-        self.genres = None
+        self.description = description
+        self.genres = genres
+        self.duration = duration
         self.tags = None
-        self.duration = None
         self.seasonTitle = None
         self.episodeNumber = None
-        self.description = None
 
 class Credentials:
 
