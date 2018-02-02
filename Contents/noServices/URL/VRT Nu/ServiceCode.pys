@@ -1,0 +1,25 @@
+from vrtplayer import VRTPlayer
+
+##########################################################################################
+def NormalizeURL(url):
+    return url
+
+##########################################################################################
+def MetadataObjectForURL(url):
+    Log(url)
+    stream = vrt_player.get_vrtnu_stream(url)
+    Log(stream.stream_url)
+
+    element = HTML.ElementFromURL(url, cacheTime=0)
+
+    return Ex.LiveMediaNotStarted
+
+##########################################################################################
+@deferred
+def MediaObjectsForURL(url):
+    Log("MediaObjectsForURL-"+url)
+    raise Ex.MediaNotAvailable
+
+##########################################################################################
+def PlayVideo(url):
+    return HTTP.Request(url).content
