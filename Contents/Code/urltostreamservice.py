@@ -17,39 +17,44 @@ class UrlToStreamService:
         self.session = requests.session()
 
     def get_stream_from_url(self, url):
-        cred = helperobjects.Credentials()
-        if not cred.are_filled_in():
-            #TODO self._kodi_wrapper.open_settings()
-            cred.reload()
-        url = urlparse.urljoin(self.vrt_base, url)
-        r = self.session.post("https://accounts.eu1.gigya.com/accounts.login",
-                               {'loginID': cred.username, 'password': cred.password, 'APIKey': self.API_KEY,
-                                'targetEnv': 'jssdk',
-                                'includeSSOToken': 'true',
-                                'authMode': 'cookie'})
+        # cred = helperobjects.Credentials()
+        # if not cred.are_filled_in():
+        #     #TODO self._kodi_wrapper.open_settings()
+        #     cred.reload()
+        # url = urlparse.urljoin(self.vrt_base, url)
+        # r = self.session.post("https://accounts.eu1.gigya.com/accounts.login",
+        #                        {'loginID': cred.username, 'password': cred.password, 'APIKey': self.API_KEY,
+        #                         'targetEnv': 'jssdk',
+        #                         'includeSSOToken': 'true',
+        #                         'authMode': 'cookie'})
 
-        logon_json = r.json()
-        if logon_json['errorCode'] == 0:
-            uid = logon_json['UID']
-            sig = logon_json['UIDSignature']
-            ts = logon_json['signatureTimestamp']
+        # logon_json = r.json()
+        # if logon_json['errorCode'] == 0:
+        #     uid = logon_json['UID']
+        #     sig = logon_json['UIDSignature']
+        #     ts = logon_json['signatureTimestamp']
 
-            headers = {'Content-Type': 'application/json', 'Referer': self.vrtnu_base_url}
-            data = '{"uid": "%s", ' \
-                   '"uidsig": "%s", ' \
-                   '"ts": "%s", ' \
-                   '"email": "%s"}' % (uid, sig, ts, cred.username)
+        #     headers = {'Content-Type': 'application/json', 'Referer': self.vrtnu_base_url}
+        #     data = '{"uid": "%s", ' \
+        #            '"uidsig": "%s", ' \
+        #            '"ts": "%s", ' \
+        #            '"email": "%s"}' % (uid, sig, ts, cred.username)
 
-            response = self.session.post("https://token.vrt.be", data=data, headers=headers)
+        #     response = self.session.post("https://token.vrt.be", data=data, headers=headers)
+        #     Log("cookies={}".format(response.cookies))
+        if "Cookies" in Dict:
+            vrtCookies = Dict["Cookies"]
+            url = urlparse.urljoin(self.vrt_base, url)
             securevideo_url = "{0}.mssecurevideo.json".format(self.cut_slash_if_present(url))
-            securevideo_response = self.session.get(securevideo_url, cookies=response.cookies)
+            Log("calling:{0}".format(securevideo_url))
+            securevideo_response = self.session.get(securevideo_url, cookies=vrtCookies)
+            Log("response:{0}".format(securevideo_response))
             json_obj = securevideo_response.json()
 
             for key in json_obj:
                 value = json_obj[key]
                 Log("securevideo_response ({}) = ({})".format(key, value))
                 #securevideo_response (/content/dam/vrt/2018/01/10/american-epic-sessions-depot_WP00120786) = ({u'videoid': u'pbs-pub-88acf470-f49f-4771-85cc-2ff2413bbda6$vid-942a5061-cde0-41a8-ab1e-49b8a6254bae', u'clientid': u'vrtvideo'})
-
 
             video_id = list(json_obj.values())[0]['videoid']
             final_url = urlparse.urljoin(self.BASE_GET_STREAM_URL_PATH, video_id)
@@ -85,6 +90,35 @@ class UrlToStreamService:
                 pass
 
             return streamMetadata
+
+    def signon(self):
+        cred = helperobjects.Credentials()
+        if not cred.are_filled_in():
+            #TODO self._kodi_wrapper.open_settings()
+            cred.reload()
+        r = self.session.post("https://accounts.eu1.gigya.com/accounts.login",
+                               {'loginID': cred.username, 'password': cred.password, 'APIKey': self.API_KEY,
+                                'targetEnv': 'jssdk',
+                                'includeSSOToken': 'true',
+                                'authMode': 'cookie'})
+
+        logon_json = r.json()
+        if logon_json['errorCode'] == 0:
+            uid = logon_json['UID']
+            sig = logon_json['UIDSignature']
+            ts = logon_json['signatureTimestamp']
+
+            headers = {'Content-Type': 'application/json', 'Referer': self.vrtnu_base_url}
+            data = '{"uid": "%s", ' \
+                   '"uidsig": "%s", ' \
+                   '"ts": "%s", ' \
+                   '"email": "%s"}' % (uid, sig, ts, cred.username)
+
+            response = self.session.post("https://token.vrt.be", data=data, headers=headers)
+            Log("cookies={}".format(response.cookies))
+            Dict["Cookies"] = response.cookies
+            Dict.Save()
+
 
     @staticmethod
     def get_hls(dictionary):

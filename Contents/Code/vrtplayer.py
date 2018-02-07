@@ -35,6 +35,18 @@ class VRTPlayer:
         return thumbnail, title
 
     @staticmethod
+    def get_subtitle(element):
+        found_element = element.xpath(".//*[@class='tile__subtitle']")
+        subtitle = ""
+        if len(found_element) > 0:
+            p_item = found_element[0].xpath("./p")
+            if len(p_item) > 0:
+                subtitle = p_item[0].text.strip()
+            else:
+                subtitle = found_element[0].text.strip()
+        return subtitle
+
+    @staticmethod
     def get_description(element):
         found_element = element.xpath(".//*[@class='tile__description']")
         description = ""
