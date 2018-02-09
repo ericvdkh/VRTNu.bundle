@@ -26,13 +26,29 @@ class VRTPlayer:
         return statichelper.replace_double_slashes_with_https(raw_thumbnail.strip())
 
     @staticmethod
+    def get_title(element):
+        found_element = element.xpath(".//*[@class='tile__title'] | .//*[@class='content__title']")
+        title = ""
+        if found_element is not None:
+            title = statichelper.replace_newlines_and_strip(found_element[0].text)
+        return title.strip().decode("utf-8")
+
+    @staticmethod
+    def get_subtitle(element):
+        found_element = element.xpath(".//*[@class='tile__subtitle']")
+        subtitle = ""
+        if found_element is not None:
+            subtitle = statichelper.replace_newlines_and_strip(found_element[0].text)
+        return subtitle.strip().decode("utf-8")
+
+    @staticmethod
     def get_thumbnail_and_title(element):
         thumbnail = VRTPlayer.format_image_url(element)
         found_element = element.xpath(".//*[@class='tile__title']")
         title = ""
         if found_element is not None:
             title = statichelper.replace_newlines_and_strip(found_element[0].text)
-        return thumbnail, title
+        return thumbnail, title.strip().decode("utf-8")
 
     @staticmethod
     def get_subtitle(element):

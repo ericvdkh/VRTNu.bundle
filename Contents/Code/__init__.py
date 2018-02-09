@@ -37,14 +37,18 @@ def MainMenu():
     )
 
     pageElement = HTML.ElementFromURL(config.VRTNU_BASE_URL)
-    for listelement in pageElement.xpath("//*[@class='list']"):
-        header = listelement.xpath(".//div[@class='vrtlist__header']/h2//text()")[0]
-        oc.add(
-            DirectoryObject(
-                key=Callback(EpisodesFromElement, title=header, element=HTML.StringFromElement(listelement)), 
-                title=header
+    for listelement in pageElement.xpath("//div[@class='list']"):
+        header = listelement.xpath(".//h2//text()")[0]
+        header = header.strip().decode("utf-8")
+        Log("MainMenu-"+header)
+        found_element = listelement.xpath(".//a[@class='tile']//@href") #./div/div[2]/ul/li/div/a
+        if len(found_element) > 0:
+            oc.add(
+                DirectoryObject(
+                    key=Callback(EpisodesFromElement, title=header, element=HTML.StringFromElement(listelement)), 
+                    title=header
+                )
             )
-        )
 
     return oc
 
@@ -69,24 +73,28 @@ def AToZ(title, url):
 ##########################################################################################
 @route(PREFIX + "/episodesfromelement")
 def EpisodesFromElement(title, element):
-    Log(element)
+    Log("EpisodesFromElement-"+element)
     oc = ObjectContainer(title2=title, view_group = 'InfoList')
     htmlelement = HTML.ElementFromString(element)
     for tile in htmlelement.xpath("//*[@class='tile']"):
         t_href = tile.xpath("./@href")[0]
         url = config.VRT_BASE_URL + t_href
-        Log("episode url="+url)
+        Log("EpisodesFromElement url="+url)
         t_image, t_title = VRTPlayer.get_thumbnail_and_title(tile)
-        Log("episode t_title="+t_title)
-        Log("episode t_image="+t_image)
+        t_title = t_title
+        Log("EpisodesFromElement t_title="+t_title)
+        Log("EpisodesFromElement t_image="+t_image)
         t_descr = VRTPlayer.get_description(tile)
-        Log("t_descr="+t_descr)
+        Log("EpisodesFromElement t_descr="+t_descr)
+        t_tagline = VRTPlayer.get_subtitle(tile)
+        Log("EpisodesFromElement t_tagline="+t_tagline)
 
         oc.add(
             DirectoryObject(
                 key = Callback(Programs, title = t_title, url = t_href, preselector="//*[@class='episodeslist']"),
                 title = t_title,
                 summary = t_descr,
+                tagline = t_tagline,
                 thumb = t_image
             )
         )
@@ -157,7 +165,23 @@ def ProgramsByLetter(url, letter, ref):
 def Programs(title, url, preselector = ""):
   oc = ObjectContainer(title2 = title, view_group = 'InfoList')
   pageElement = HTML.ElementFromURL(config.VRT_BASE_URL + url)
-  for tile in pageElement.xpath("{0}//*[@class='tile']".format(preselector)):
+  found_elements = pageElement.xpath("{0}//*[@class='tile']".format(preselector))
+  if (len(found_elements) == 0):
+    Log("Programs-No episode tiles found, get episode from main")
+    myStream = vrt_player.get_vrtnu_stream(config.VRT_BASE_URL + url)
+    Log("Programs myStream_url="+myStream.stream_url)
+    MyShow = VRTPlayer.get_title(pageElement)
+    MyThumb = VRTPlayer.format_image_url(pageElement)
+    oc.add(createEpisodeObject(
+            url=myStream.stream_url,
+            title=myStream.title,
+            summary=myStream.description,
+            show_name=MyShow,
+            duration=myStream.duration,
+            thumb=MyThumb,
+            rating_key=myStream.title))
+
+  for tile in found_elements:
     t_image, t_title = VRTPlayer.get_thumbnail_and_title(tile)
     Log("episode t_title="+t_title)
     Log("episode t_image="+t_image)
@@ -205,10 +229,22 @@ def createEpisodeObject(url, title, summary, thumb, rating_key, originally_avail
         show = show_name,
         items = [
             MediaObject(
+                # parts = [
+                #     PartObject(key=Callback(PlayVideo, url=url))
                 parts = [
-                    PartObject(key=Callback(PlayVideo, url=url))
+                    PartObject(key=HTTPLiveStreamURL(url))
                 ],
-				        optimized_for_streaming = True
+                audio_channels = 2,
+                video_resolution = '720',
+				optimized_for_streaming = True
+                # HTTPLiveStreamURL will set
+                #   protocol = 'hls',
+                #   container = 'mpegts',
+                #   video_codec = VideoCodec.H264,
+                #   audio_codec = AudioCodec.AAC,
+                # Other settings tried but not much better:
+                #   container = Container.MP4,
+                #   video_frame_rate = 60,
             )
         ]
     )

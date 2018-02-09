@@ -76,8 +76,13 @@ class UrlToStreamService:
                 #stream_response: (aspectRatio) = (16:9)
 
             hls = self.get_hls(stream_json['targetUrls']).replace("https", "http")
-            subtitle = None
-            streamMetadata = helperobjects.StreamMetadata(hls, subtitle)
+            
+            streamMetadata = helperobjects.StreamMetadata(hls)
+
+            try:
+                streamMetadata.title = stream_json['title']
+            except:
+                pass
 
             try:
                 streamMetadata.description = stream_json['description']

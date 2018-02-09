@@ -9,9 +9,10 @@ class TitleItem:
 
 class StreamMetadata:
 
-    def __init__(self, stream_url, subtitle_url, description=None, genres=None, duration=None):
+    def __init__(self, stream_url, title=None, subtitle_url=None, description=None, genres=None, duration=None):
         self.stream_url = stream_url
         self.subtitle_url = subtitle_url
+        self.title = title
         self.description = description
         self.genres = genres
         self.duration = duration
