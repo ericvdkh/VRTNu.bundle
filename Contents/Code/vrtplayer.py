@@ -73,3 +73,13 @@ class VRTPlayer:
             else:
                 description = found_element[0].text.strip()
         return description
+
+    @staticmethod
+    def get_episode(element):
+        found_element = element.xpath(".//abbr[@title='aflevering']/parent::div/text()")
+        description = ""
+        if len(found_element) > 0:
+            p_item = found_element[0]
+            if len(p_item) > 0:
+                description = p_item.strip()
+        return description
